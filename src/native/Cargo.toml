@@ -1,0 +1,19 @@
+[package]
+name = "kyuaru"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+
+[lib]
+name = "kyuaru"
+crate-type = ['cdylib', 'rlib']
+path = "./lib.rs"
+
+[dev-dependencies]
+proptest = "1"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"

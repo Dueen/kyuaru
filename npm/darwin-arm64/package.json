@@ -1,0 +1,27 @@
+{
+  "name": "@kyuaru/darwin-arm64",
+  "version": "0.1.0",
+  "description": "darwin-arm64 native binary for kyuaru",
+  "main": "libkyuaru.dylib",
+  "scripts": {
+    "prepack": "cargo build --release --manifest-path ../../src/native/Cargo.toml && cp ../../src/native/target/release/libkyuaru.dylib libkyuaru.dylib"
+  },
+  "files": [
+    "libkyuaru.dylib"
+  ],
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "engines": {
+    "node": ">=26"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dueen/kyuaru.git"
+  },
+  "license": "MIT",
+  "author": "Dueen Eduarda <vases_goblet.1g@icloud.com>"
+}

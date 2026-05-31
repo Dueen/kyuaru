@@ -1,0 +1,97 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run checks and package dry-runs without publishing"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish npm packages
+    runs-on: macos-15
+    environment: npm
+
+    env:
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == true }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-optional
+
+      - name: Verify release versions
+        run: |
+          set -euo pipefail
+          root_version="$(node -p "require('./package.json').version")"
+          darwin_version="$(node -p "require('./npm/darwin-arm64/package.json').version")"
+          test "$root_version" = "$darwin_version"
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            test "$GITHUB_REF_NAME" = "v$root_version"
+          fi
+
+      - name: Verify runner platform
+        run: |
+          node -e 'if (process.platform !== "darwin" || process.arch !== "arm64") throw new Error("expected darwin-arm64, got " + process.platform + "-" + process.arch)'
+
+      - name: Generate declarations
+        run: pnpm run types
+
+      - name: Check generated declarations are committed
+        run: git diff --exit-code -- src/*.d.ts
+
+      - name: Check Rust formatting
+        run: cargo fmt --manifest-path src/native/Cargo.toml --check
+
+      - name: Run Rust tests
+        run: cargo test --manifest-path src/native/Cargo.toml
+
+      - name: Run clippy
+        run: cargo clippy --manifest-path src/native/Cargo.toml -- -D warnings
+
+      - name: Build native release library
+        run: pnpm build:native
+
+      - name: Run Node.js FFI tests
+        run: pnpm test:node
+
+      - name: Check root package tarball
+        run: npm pack --dry-run
+
+      - name: Check darwin-arm64 package tarball
+        working-directory: npm/darwin-arm64
+        run: npm pack --dry-run
+
+      - name: Publish darwin-arm64 package
+        if: env.DRY_RUN != 'true'
+        working-directory: npm/darwin-arm64
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish root package
+        if: env.DRY_RUN != 'true'
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

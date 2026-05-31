@@ -1,0 +1,65 @@
+{
+  "name": "kyuaru",
+  "version": "0.1.0",
+  "description": "Minimal Node wrapper around the kyuaru native QR encoder",
+  "type": "module",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src/errors.d.ts",
+    "src/errors.js",
+    "src/index.d.ts",
+    "src/index.js",
+    "src/load-native.d.ts",
+    "src/load-native.js",
+    "src/options.d.ts",
+    "src/options.js",
+    "LICENSE",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dueen/kyuaru.git"
+  },
+  "scripts": {
+    "test:native": "cargo test --manifest-path src/native/Cargo.toml",
+    "test:node": "node --experimental-ffi --test --disable-warning=ExperimentalWarning test/*.test.js",
+    "test": "pnpm build:native && pnpm run --parallel /^test:/",
+    "lint:actions": "actionlint",
+    "lint:eslint": "eslint .",
+    "lint": "pnpm run --parallel /^lint:/",
+    "build:native": "cargo build --release --manifest-path src/native/Cargo.toml",
+    "build:package:darwin-arm64": "pnpm build:native && cp src/native/target/release/libkyuaru.dylib npm/darwin-arm64/libkyuaru.dylib",
+    "build": "pnpm build:native",
+    "types": "rm -f src/*.d.ts && tsc src/errors.js src/options.js src/load-native.js src/index.js --allowJs --emitDeclarationOnly --declaration --outDir src --types node"
+  },
+  "keywords": [
+    "qr",
+    "qrcode",
+    "encoder",
+    "ffi",
+    "rust"
+  ],
+  "author": "Dueen Eduarda <vases_goblet.1g@icloud.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=26"
+  },
+  "devDependencies": {
+    "@types/node": "25.6.2",
+    "eslint": "^10.4.1",
+    "neostandard": "^0.13.0",
+    "typescript": "6.0.3"
+  },
+  "optionalDependencies": {
+    "@kyuaru/darwin-arm64": "0.1.0"
+  },
+  "packageManager": "pnpm@11.2.2+sha512.36e6621fad506178936455e70247b8808ef4ec25797a9f437a93281a020484e2607f6a469a22e982987c3dbb8866e3071514ab10a4a1749e06edcd1ec118436f"
+}

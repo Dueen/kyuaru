@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test and pack
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-optional
+
+      - name: Generate declarations
+        run: pnpm run types
+
+      - name: Check generated declarations are committed
+        run: git diff --exit-code -- src/*.d.ts
+
+      - name: Check Rust formatting
+        run: cargo fmt --manifest-path src/native/Cargo.toml --check
+
+      - name: Run Rust tests
+        run: cargo test --manifest-path src/native/Cargo.toml
+
+      - name: Run clippy
+        run: cargo clippy --manifest-path src/native/Cargo.toml -- -D warnings
+
+      - name: Build native release library
+        run: pnpm build:native
+
+      - name: Run Node.js FFI tests
+        run: pnpm test:node
+
+      - name: Check root package tarball
+        run: npm pack --dry-run
+
+      - name: Check darwin-arm64 package tarball
+        working-directory: npm/darwin-arm64
+        run: npm pack --dry-run
