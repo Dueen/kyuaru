@@ -39,7 +39,7 @@ jobs:
         run: corepack enable
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-optional
+        run: pnpm install --frozen-lockfile --no-optional
 
       - name: Verify release versions
         run: |
