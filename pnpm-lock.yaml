@@ -20,6 +20,12 @@ importers:
       typescript:
         specifier: 6.0.3
         version: 6.0.3
+    optionalDependencies:
+      '@kyuaru/darwin-arm64':
+        specifier: 0.1.0
+        version: link:npm/darwin-arm64
+
+  npm/darwin-arm64: {}
 
 packages:
 
